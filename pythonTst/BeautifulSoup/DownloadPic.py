@@ -5,6 +5,7 @@
 # 抓取 https://unsplash.com 中的图片
 import threadpool as threadpool
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from pip._vendor import requests
 from bs4 import BeautifulSoup
 import os
@@ -21,10 +22,12 @@ class BeautifulPicture:
     def get_pic(self):
         start_time = time.time()
         # r = self.request(self.web_url)
-        # 使用selenium通过PhantomJS来进行网络请求
-        driver = webdriver.PhantomJS()
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--disable-gpu')
+        driver = webdriver.Chrome(chrome_options=chrome_options)
         driver.get(self.web_url)
-        self.scroll_down(driver=driver, times=50)  # 执行网页下拉到底部操作
+        self.scroll_down(driver=driver, times=20)  # 执行网页下拉到底部操作
         print('开始获取所有img标签')
         # all_img = BeautifulSoup(r.text, 'lxml').find_all('img', class_='KW7g_ _1hz5D')
         all_img = BeautifulSoup(driver.page_source, 'lxml').find_all('img', class_='_2zEKz')
@@ -70,7 +73,7 @@ class BeautifulPicture:
 
         task_pool.wait()
 
-        print('--------------- %d second'% (time.time()-start_time))
+        print('--------------- %d second' % (time.time()-start_time))
 
     def save_img(self, url, name):
         img = self.request(url)
@@ -98,7 +101,7 @@ class BeautifulPicture:
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")  # 执行JavaScript实现网页下拉倒底部
             print("第", str(i + 1), "次下拉操作执行完毕")
             print("第", str(i + 1), "次等待网页加载......")
-            time.sleep(2)  # 等待x秒,页面加载出来再执行下拉操作
+            time.sleep(1)  # 等待x秒,页面加载出来再执行下拉操作
 
     def get_files(self, path):
         pic_names = os.listdir(path)
