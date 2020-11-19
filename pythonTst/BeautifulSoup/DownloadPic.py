@@ -10,34 +10,38 @@ from pip._vendor import requests
 from bs4 import BeautifulSoup
 import os
 import time
+import random
 
 
 class BeautifulPicture:
 
     def __init__(self):  # 类的初始化操作
-        self.headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36'}  # 给请求指定一个请求头来模拟chrome浏览器
+        self.headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, '
+                                      'like Gecko) Chrome/60.0.3112.113 Safari/537.36'}  # 给请求指定一个请求头来模拟chrome浏览器
         self.web_url = 'https://unsplash.com'  # 要访问的网页地址
-        self.folder_path = 'D:\BeautifulPicture'  # 设置图片要存放的文件目录
+        self.folder_path = '/Users/xuchao/Documents/beautifulImg'  # 设置图片要存放的文件目录
 
     def get_pic(self):
         start_time = time.time()
         # r = self.request(self.web_url)
         chrome_options = Options()
-        chrome_options.add_argument('--headless')
+        # chrome_options.add_argument('--headless')
         chrome_options.add_argument('--disable-gpu')
         driver = webdriver.Chrome(chrome_options=chrome_options)
+        # driver.set_window_size(1100, 600)
         driver.get(self.web_url)
-        self.scroll_down(driver=driver, times=20)  # 执行网页下拉到底部操作
+        self.scroll_down(driver=driver, times=2)  # 执行网页下拉到底部操作
         print('开始获取所有img标签')
         # all_img = BeautifulSoup(r.text, 'lxml').find_all('img', class_='KW7g_ _1hz5D')
-        all_img = BeautifulSoup(driver.page_source, 'lxml').find_all('img', class_='_2zEKz')
+        # all_img = BeautifulSoup(driver.page_source, 'lxml').find_all('img', class_='_2zEKz')
+        all_img = BeautifulSoup(driver.page_source, 'html.parser').find_all('img', class_='_2zEKz')
         print("----------------- the num is:", len(all_img))
-        is_new_folder=self.mkdir(self.folder_path)  # 创建文件夹
+        is_new_folder = self.mkdir(self.folder_path)  # 创建文件夹
         os.chdir(self.folder_path)   # 切换到创建的文件夹
 
         file_names = self.get_files(self.folder_path)  # 获取文件家中的所有文件名,类型是list
 
-        task_pool=threadpool.ThreadPool(10)# 线程池
+        task_pool = threadpool.ThreadPool(10) # 线程池
 
         for img in all_img:
             img_str = img['src']
@@ -61,12 +65,12 @@ class BeautifulPicture:
                 # self.save_img(img_url_final, img_name)
                 if is_new_folder:
                     # self.save_img(img_url, img_name)
-                    requests=threadpool.makeRequests(self.save_img,[((img_url_final,img_name), {})])
+                    requests = threadpool.makeRequests(self.save_img,[((img_url_final,img_name), {})])
                     [task_pool.putRequest(req) for req in requests]
                 else:
                     if img_name not in file_names:
                         # self.save_img(img_url, img_name)
-                        requests=threadpool.makeRequests(self.save_img,[((img_url_final,img_name), {})])
+                        requests = threadpool.makeRequests(self.save_img,[((img_url_final,img_name), {})])
                         [task_pool.putRequest(req) for req in requests]
                     else:
                         print("该图片已经存在：", img_name, ",不再重新下载。")
@@ -98,10 +102,23 @@ class BeautifulPicture:
 
     def scroll_down(self, driver, times):  # 下拉
         for i in range(times):
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")  # 执行JavaScript实现网页下拉倒底部
-            print("第", str(i + 1), "次下拉操作执行完毕")
-            print("第", str(i + 1), "次等待网页加载......")
-            time.sleep(1)  # 等待x秒,页面加载出来再执行下拉操作
+            px = 200
+            cnt = 100
+            for j in range(cnt):
+                driver.execute_script("window.scrollTo("+str(j*px)+", "+str((j+1)*px)+");")
+                time.sleep(5)
+
+            # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            # cnt = 10
+            # for j in range(cnt):
+            #     start = random.randint(256, 10240)
+            #     end = random.randint(256, 10240)
+            #     driver.execute_script("window.scrollTo("+str(start)+", "+str(end)+");")
+            #     time.sleep(1)
+            #
+            # print("第", str(i + 1), "次下拉操作执行完毕")
+            # print("第", str(i + 1), "次等待网页加载......")
+            # time.sleep(3)  # 等待x秒,页面加载出来再执行下拉操作
 
     def get_files(self, path):
         pic_names = os.listdir(path)
